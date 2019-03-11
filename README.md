@@ -1,11 +1,11 @@
 ![alt text](https://i.imgur.com/ck96pzh.png)
-# AnchorWatch - A Rogue Device Detection Script for Windows with Email Alerts
+# AnchorWatch - A rogue device detection script for Windows with email alerts
 
 # Features
 
-AnchorWatch is a simple script that scan the subnet every X minutes and send email alerts on each blacklisted device discovery.
+AnchorWatch is a simple script that scans the subnet every X minutes and sends an email alert for each unknown device discovery.
 
-Email contains the following informaiton:
+Email contains the following information:
 
 1. MAC Address
 2. Hostname
@@ -17,7 +17,7 @@ Email contains the following informaiton:
 # Installation
 
 AnchorWatch is a powershell script that depends on `nmap` - a network scanning utility - for scanning the subnet.
-AnchorWatch send email notification each time a rogue device is detected on the network. 
+AnchorWatch will send an email notification each time an unknown device is detected on the network. 
 An example of email notification from AnchorWatch:
 
 ![alt text](https://i.imgur.com/maS8aHw.jpg)
@@ -31,7 +31,6 @@ AnchorWatch has no dependency other than nmap. Download nmap for windows here: h
 Edit ./anchorWatch.ps1 and add the follwing details in corresponding sections:
 
 ```
-Network Range/CIDR:     Ex: 192.168.0.1/24, 10.0.0.1/16, 172.20.17.100-172.20.17.200" 
 SMTP Hostname           Domain Name of SMTP Server
 SMTP Username
 SMTP Password
@@ -88,3 +87,5 @@ At the time there were no cheap or free alternative available, especially for Wi
 Hardeep Singh is the founder of https://rootsh3ll.com and primarily teaches Wireless Network Security. You can reach him on harry [at] rootsh3ll.com
 
 Follow on Twitter: https://twitter.com/rootsh3ll
+
+(Slight rework by github.com/cap44)

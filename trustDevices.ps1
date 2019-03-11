@@ -1,13 +1,13 @@
-﻿$networkrange="192.168.0.1/24"      #your subnet as in anchorWatch.ps1. ex: "10.10.10.1/16, 192.168.0.1/24"
+﻿$networkrange = Read-Host "What networks should I scan? (please enter the subnet in full): "
+#AnchorWatch will ask for the network range upon startup
+Clear-Host
 
-clear-host
-
-if ($networkrange.length -eq 0) 
+if ($networkrange.length -eq 0)
 {
-    write-host "Network range undefined on line 1.`nEdit line 1 and define Network range to scan. Example: 192.168.0.1/24`n"
+    Write-Host "Incorrect network range.`nTry again, and define network range to scan. For example: 192.168.0.1/24`n"
     exit
 }
-function parse-nmap 
+function parse-nmap
 {
 	param($Path, [String] $OutputDelimiter = "`n", [Switch] $RunStatsOnly)
 	
@@ -103,9 +103,11 @@ function parse-nmap
 			if ($hostnode.Status -ne $null -and $hostnode.Status.length -ne 0) { $entry.Status = $hostnode.status.state.Trim() }  
 			if ($entry.Status.length -lt 2) { $entry.Status = "<no-status>" }
 
-			# Extract computer names provided by user or through PTR record, but avoid duplicates and allow multiple names.
-            # Note that $hostnode.hostnames can be empty, and the formatting of one versus multiple names is different.
-            # The crazy foreach-ing here is to deal with backwards compatibility issues...
+			<# 
+			Extract computer names provided by user or through PTR record, but avoid duplicates and allow multiple names.
+            Note that $hostnode.hostnames can be empty, and the formatting of one versus multiple names is different.
+			The crazy foreach-ing here is to deal with backwards compatibility issues...
+			#>
             $tempFQDN = $tempHostName = ""
 			ForEach ($hostname in $hostnode.hostnames)
             {
@@ -157,10 +159,12 @@ function parse-nmap
 			if ($entry.MAC  -eq $null) { $entry.MAC  = "<no-mac>"  } else { $entry.MAC  = $entry.MAC.Trim() }
 
 
-			# Process all ports from <ports><port>, and note that <port> does not contain an array if it only has one item in it.
-            # This could be parsed out into separate properties, but that would be overkill.  We still want to be able to use
-            # simple regex patterns to do our filtering afterwards, and it's helpful to have the output look similar to
-            # the console output of nmap by itself for easier first-time comprehension.  
+            <# 
+            Process all ports from <ports><port>, and note that <port> does not contain an array if it only has one item in it.
+            This could be parsed out into separate properties, but that would be overkill.  We still want to be able to use
+            simple regex patterns to do our filtering afterwards, and it's helpful to have the output look similar to
+            the console output of nmap by itself for easier first-time comprehension.
+            #>
 			if ($hostnode.ports.port -eq $null) { $entry.Ports = "<no-ports>" ; $entry.Services = "<no-services>" } 
 			else 
 			{
@@ -213,7 +217,7 @@ function parse-nmap
 		}
 
 		Write-Verbose -Message ( "[" + (get-date).ToLongTimeString() + "] Finished $file, processed $i entries." ) 
-        Write-Verbose -Message ('Total Run Time: ' + ( [MATH]::Round( ((Get-date) - $StartTime).TotalSeconds, 3 )) + ' seconds')
+        Write-Verbose -Message ('Total Runtime: ' + ( [MATH]::Round( ((Get-date) - $StartTime).TotalSeconds, 3 )) + ' seconds')
         Write-Verbose -Message ('Entries/Second: ' + ( [MATH]::Round( ($i / $((Get-date) - $StartTime).TotalSeconds), 3 ) ) )  
 	}
 }
@@ -232,14 +236,14 @@ if ($ParamArgs.Path -eq $null) { $ParamArgs.Path = @(); $input | foreach { $Para
 
 #############
 
-#Nmap command to run - adjust if you have it installed in another directory:
-write-host "Scanning the subnet..."
+#Nmap command to run - ajdust if Nmap isn't installed in the default directory:
+Write-Host "Scanning subnet..."
 
-c:\"program files (x86)"\nmap\nmap.exe $networkrange -p 22,80,445,21,8080 -O -oX prescan_list.netxml | out-null
+Start-Process -FilePath 'C:\Program Files (x86)\Nmap\nmap.exe' -ArgumentList "$networkrange -p 22,80,445,65123,56123 -O -oX rogue_devices.netxml" | Out-Null
 
-parse-nmap prescan_list.netxml | select mac, hostname | out-file -FilePath known_hosts.txt
+parse-nmap prescan_list.netxml | Select-Object mac, hostname | out-file -FilePath known_hosts.txt
 
-$x = parse-nmap prescan_list.netxml | select mac, hostname
+$x = parse-nmap prescan_list.netxml | Select-Object mac, hostname
 
 clear-host
-write-host $x.length "elements written in known_hosts.txt`nRun arpScan.ps1 for rogue device detection`n"
+write-host $x.length "elements written in known_hosts.txt`nRun anchorWatch.ps1 for scan the network for unknown devices`n"

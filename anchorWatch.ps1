@@ -1,30 +1,25 @@
 ﻿[CmdletBinding(SupportsShouldProcess=$True)]
 Param ([Parameter(Mandatory=$False, ValueFromPipeline=$true)] $Path, [String] $OutputDelimiter = "`n", [Switch] $RunStatsOnly)
 
+Write-Host "AnchorWatch 1.0.1 Starting"
 ############# ENTER YOUR CREDENTIALS HERE #############
 
-$networkrange="192.168.0.1/24"      #Your subnet(s) here. ex: "10.10.10.1/16, 192.168.0.1/24"
-
-
+$networkrange= Read-Host "What networks should I scan? (please enter the subnet in full): "      # Ask the administrator of the network for the subnet 
 #Minutes to refresh:
-$mins=1        #Time in minutes
-
+$mins=2        #Time in minutes
 #Email settings
 $smtpserver=""      #SMTP Server address. ex:  email-smtp.us-west-2.amazonaws.com 
 $username = ""      #SMTP Username
 $password = ""      #SMTP Password
 $emailFrom = ""     #Email used for sending Mails 
 $emailTo = ""       #Recipient email Address 
-
-
-#############
-
-# usage: 
-# $ ./trustDevices.ps1 - To generate a list of connected devices in known_hosts.txt 
-# Use known_hosts.txt for whitelisted devices. MAC addresses not available in known_hosts.txt will trigger an email alert.
-
-# $ ./anchorwatch.ps1   # Infinite scanning running every $mins minutes
-
+<#
+usage: 
+$ ./trustDevices.ps1 - Generate a list of connected devices in known_hosts.txt 
+Use known_hosts.txt for whitelisted devices. 
+MAC addresses not available in known_hosts.txt will trigger an email alert.
+$ ./anchorwatch.ps1 - Infinite scanning running every $mins minutes
+#>
 
 #Function Definitions
 function Get-MacVendor {
@@ -71,7 +66,7 @@ function parse-nmap
 	}
 
 	if ($Path -eq $null) {$Path = @(); $input | foreach { $Path += $_ } } 
-	if (($Path -ne $null) -and ($Path.gettype().name -eq "String")) {$Path = dir $path} #To support wildcards in $path.  
+	if (($Path -ne $null) -and ($Path.gettype().name -eq "String")) {$Path = Get-ChildItem $path} #To support wildcards in $path.  
 	$1970 = [DateTime] "01 Jan 1970 01:00:00 GMT"
 
 	if ($RunStatsOnly)
@@ -102,8 +97,10 @@ function parse-nmap
 
                 if ($services -ne $null -and $services.contains("-"))
                 {
-                    #In the original XML, ranges of ports are summarized, e.g., "500-522", 
-                    #but the script will list each port separately for easier searching.
+					<#
+					#In the original XML, ranges of ports are summarized, e.g., "500-522", 
+					#but the script will list each port separately for easier searching.
+					#>
                     $array = $($services.replace("-","..")).Split(",")
                     $temp  = @($array | where { $_ -notlike "*..*" })  
                     $array | where { $_ -like "*..*" } | foreach { invoke-expression "$_" } | foreach { $temp += $_ } 
@@ -155,9 +152,11 @@ function parse-nmap
 			if ($hostnode.Status -ne $null -and $hostnode.Status.length -ne 0) { $entry.Status = $hostnode.status.state.Trim() }  
 			if ($entry.Status.length -lt 2) { $entry.Status = "<no-status>" }
 
-			# Extract computer names provided by user or through PTR record, but avoid duplicates and allow multiple names.
-            # Note that $hostnode.hostnames can be empty, and the formatting of one versus multiple names is different.
-            # The crazy foreach-ing here is to deal with backwards compatibility issues...
+			<# 
+			Extract computer names provided by user or through PTR record, but avoid duplicates and allow multiple names.
+            Note that $hostnode.hostnames can be empty, and the formatting of one versus multiple names is different.
+			The crazy foreach-ing here is to deal with backwards compatibility issues...
+			#>
             $tempFQDN = $tempHostName = ""
 			ForEach ($hostname in $hostnode.hostnames)
             {
@@ -209,10 +208,12 @@ function parse-nmap
 			if ($entry.MAC  -eq $null) { $entry.MAC  = "<no-mac>"  } else { $entry.MAC  = $entry.MAC.Trim() }
 
 
-			# Process all ports from <ports><port>, and note that <port> does not contain an array if it only has one item in it.
-            # This could be parsed out into separate properties, but that would be overkill.  We still want to be able to use
-            # simple regex patterns to do our filtering afterwards, and it's helpful to have the output look similar to
-            # the console output of nmap by itself for easier first-time comprehension.  
+			<# 
+			Process all ports from <ports><port>, and note that <port> does not contain an array if it only has one item in it.
+            This could be parsed out into separate properties, but that would be overkill.  We still want to be able to use
+            simple regex patterns to do our filtering afterwards, and it's helpful to have the output look similar to
+			the console output of nmap by itself for easier first-time comprehension.  
+			#>
 			if ($hostnode.ports.port -eq $null) { $entry.Ports = "<no-ports>" ; $entry.Services = "<no-services>" } 
 			else 
 			{
@@ -265,7 +266,7 @@ function parse-nmap
 		}
 
 		Write-Verbose -Message ( "[" + (get-date).ToLongTimeString() + "] Finished $file, processed $i entries." ) 
-        Write-Verbose -Message ('Total Run Time: ' + ( [MATH]::Round( ((Get-date) - $StartTime).TotalSeconds, 3 )) + ' seconds')
+        Write-Verbose -Message ('Total Runtime: ' + ( [MATH]::Round( ((Get-date) - $StartTime).TotalSeconds, 3 )) + ' seconds')
         Write-Verbose -Message ('Entries/Second: ' + ( [MATH]::Round( ($i / $((Get-date) - $StartTime).TotalSeconds), 3 ) ) )  
 	}
 }
@@ -279,27 +280,26 @@ if ($ParamArgs.Path -eq $null) { $ParamArgs.Path = @(); $input | foreach { $Para
 
 # Run the main function with the splatted params:
 
-
 #---------------------------------------------------------------------------------------------------- 
 
-#start loop.  Read the known_hosts.txt file each loop
+#Start main program loop. Read the known_hosts.txt file each loop.
 while ($true){
 
-#Nmap command to run - adjust if you have it installed in another directory:
-write-host "Scanning.."
-
-c:\"program files (x86)"\nmap\nmap.exe $networkrange -p 22,80,445,65123,56123 -O -oX rogue_devices.netxml | out-null
-clear-host
+#Nmap command to run - ajdust if Nmap isn't installed in the default directory:
+Write-Host "AnchorWatch: Starting network scan..."
+Start-Process -FilePath 'C:\Program Files (x86)\Nmap\nmap.exe' -ArgumentList "$networkrange -p 22,80,445,65123,56123 -O -oX rogue_devices.netxml" | Out-Null
+Clear-Host
 
 $livehosts = parse-nmap rogue_devices.netxml
 
-#start with a blank screen and print key
-clear-host
+#Flush the screen, then print the current date, and the legend
+Clear-Host
 $date = get-date
 write-host "Last scan time: $date`n"
 
-write-host "Green = Found Host" -foregroundcolor "darkgreen"
-write-host "Red = Unknown Host`n`n" -foregroundcolor "red"
+Write-Host "AnchorWatch Legend:"
+write-host "Green - Known device" -foregroundcolor "darkgreen"
+write-host "Red - Unknown device`n`n" -foregroundcolor "red"
 
 
 #loop through all lines in the $live_hosts array to see if they are matched:
@@ -310,25 +310,24 @@ $knownhosts = get-content known_hosts.txt
 #due to the way the output is formatted we need to check if we are a MAC address line:
 
 if ( $element.MAC.Length -lt 17 ) 
-
 { 
     break 
 }
 	$hostname = $element.hostname
 	
-#check if $hostname is populated - if it is:
+#check if $hostname is populated - if it is, then:
 
 	if ($hostname.length -gt 0) {
 		$macaddress = $element.mac
         $ip = $element.ipv4
         $os = $element.os 
-        $oui = Get-MacVendor -MacAddress $macaddress | select -ExpandProperty Vendor
+        $oui = Get-MacVendor -MacAddress $macaddress | select-object -ExpandProperty Vendor
 		
 	}	#end check if $hostname is populated
-		
-	#now check if we have at least a MAC and an IP/hostname.  If we have we can check the $knownshosts array and 
-	#see if it exists.  If it does then colour it green - if not, colour it red to stand out:
-
+	<#
+	now check if we have at least a MAC and an IP/hostname.  If we have we can check the $knownshosts array and 
+	see if it exists.  If it does then colour it green - if not, colour it red to stand out:
+	#>
 
 	if (($hostname.length -gt 0) -and ($macaddress.length -gt 0)) {
 	
@@ -352,8 +351,10 @@ if ( $element.MAC.Length -lt 17 )
 		} 
 	
 		if ($found -eq $false ) {
-			#the mac address is not known - so display but colour it red
-			#we could also choose to do something - fire an event that emails someone, etc
+			<#
+			the mac address is unknown - so display it in red
+			we could also choose to do something - fire an event that emails someone, etc
+			#>
 			write-host $macaddress`t$ip`t$hostname -foregroundcolor "red"
 			
 			#write it to the file unknown_hosts.txt
@@ -365,17 +366,17 @@ if ( $element.MAC.Length -lt 17 )
 			
 			#send an email
 			$emailMessage = New-Object System.Net.Mail.MailMessage
-			$emailMessage.From = "Alert <$emailFrom>"
+			$emailMessage.From = "AnchorWatch <$emailFrom>"
 			$emailMessage.To.Add( $emailTo )
-			$emailMessage.Subject = "Rogue Device Detected !"
+			$emailMessage.Subject = "AnchorWatch Notification: Unknown device has been detected on the network"
 			$emailMessage.IsBodyHtml = $true
 			
-			$emailMessage.Body = "<p><b>MAC: </b>$macaddress</p>
+			$emailMessage.Body = "<p><b>MAC Address: </b>$macaddress</p>
 			<p><b>Hostname</b>: $hostname</p>
 			<p><b>IP Address</b>: $ip</p>
-			<p><b>OS</b>: $os</p>
-			<p><b>OUI</b>: $oui</p>
-			<p><b>Last seen</b>: $date</p>"
+			<p><b>Operating System</b>: $os</p>
+			<p><b>OUI (Vender name)</b>: $oui</p>
+			<p><b>Last seen on the network</b>: $date</p>"
 
 			$smtp=new-object Net.Mail.SmtpClient($smtpServer) 
 			$smtp.EnableSsl = $true 
