@@ -3,18 +3,25 @@ Param ([Parameter(Mandatory=$False, ValueFromPipeline=$true)] $Path, [String] $O
 
 Import-Module .\Get-MACVendor.psm1
 
-Write-Host "AnchorWatch 1.0.1 Starting"
+Write-Host "AnchorWatch 1.0.1 Started"
+
 ############# ENTER YOUR CREDENTIALS HERE #############
 
-$networkrange= Read-Host "What networks should I scan? (please enter the subnet in full): "      # Ask the administrator of the network for the subnet 
+#Define Network range
+$networkrange= ""      # Ask the administrator of the network for the subnet. Ex: "172.16.211.133/24, 10.10.10.1/16" 
+
 #Minutes to refresh:
-$mins=2        #Time in minutes
+$mins=10        #Time in minutes. Default: 10 minutes
+
 #Email settings
 $smtpserver=""      #SMTP Server address. ex:  email-smtp.us-west-2.amazonaws.com 
 $username = ""      #SMTP Username
 $password = ""      #SMTP Password
 $emailFrom = ""     #Email used for sending Mails 
 $emailTo = ""       #Recipient email Address 
+
+#######################################################
+
 <#
 usage: 
 $ ./trustDevices.ps1 - Generate a list of connected devices in known_hosts.txt 
@@ -258,7 +265,7 @@ while ($true){
 
 #Nmap command to run - ajdust if Nmap isn't installed in the default directory:
 Write-Host "AnchorWatch: Starting network scan..."
-Start-Process -FilePath 'C:\Program Files (x86)\Nmap\nmap.exe' -ArgumentList "$networkrange -p 22,80,445,65123,56123 -O -oX rogue_devices.netxml" | Out-Null
+c:\"program files (x86)"\nmap\nmap.exe $networkrange -p 22,80,445,65123,56123 -O -oX rogue_devices.netxml | Out-Null
 Clear-Host
 
 $livehosts = parse-nmap rogue_devices.netxml
