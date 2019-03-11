@@ -1,6 +1,19 @@
 ![alt text](https://i.imgur.com/ck96pzh.png)
 # AnchorWatch - A Rogue Device Detection Script for Windows with Email Alerts
 
+# Features
+
+AnchorWatch is a simple script that scan the subnet every X minutes and send email alerts on each blacklisted device discovery.
+
+Email contains the following informaiton:
+
+1. MAC Address
+2. Hostname
+3. IP Address
+4. OS Name
+5. OUI Vendor Name
+6. Last Seen Timestamp
+
 # Installation
 
 AnchorWatch is a powershell script that depends on `nmap` - a network scanning utility - for scanning the subnet.
