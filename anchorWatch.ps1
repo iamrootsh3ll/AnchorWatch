@@ -1,6 +1,8 @@
 ﻿[CmdletBinding(SupportsShouldProcess=$True)]
 Param ([Parameter(Mandatory=$False, ValueFromPipeline=$true)] $Path, [String] $OutputDelimiter = "`n", [Switch] $RunStatsOnly)
 
+Import-Module .\Get-MACVendor.psm1
+
 Write-Host "AnchorWatch 1.0.1 Starting"
 ############# ENTER YOUR CREDENTIALS HERE #############
 
@@ -22,37 +24,6 @@ $ ./anchorwatch.ps1 - Infinite scanning running every $mins minutes
 #>
 
 #Function Definitions
-function Get-MacVendor {
-
-		[CmdletBinding()]
-		param(
-		[Parameter (Mandatory=$true,
-                    ValueFromPipeline=$true)]
-		[ValidatePattern("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")]
-		[string[]]$MacAddress
-		)
-        process{
-		foreach($Mac in $MacAddress){
-		try{
-				Write-Verbose 'Sending Request to https://mac-to-vendor.herokuapp.com/'
-				Invoke-RestMethod -Method Get -Uri https://mac-to-vendor.herokuapp.com/$Mac -ErrorAction SilentlyContinue | Foreach-object {
-
-					[pscustomobject]@{
-						Vendor = $_
-						MacAddress = $Mac
-					}
-				}
-			}
-		catch{
-				Write-Warning -Message "$Mac, $_"
-			}
-        }
-   }
-         end{}
-    
-}
-
-
 
 function parse-nmap 
 {
@@ -321,7 +292,7 @@ if ( $element.MAC.Length -lt 17 )
 		$macaddress = $element.mac
         $ip = $element.ipv4
         $os = $element.os 
-        $oui = Get-MacVendor -MacAddress $macaddress | select-object -ExpandProperty Vendor
+        $oui = Get-MACVendor -MAC $macaddress
 		
 	}	#end check if $hostname is populated
 	<#
