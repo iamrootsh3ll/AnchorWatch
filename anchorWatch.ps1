@@ -3,7 +3,7 @@ Param ([Parameter(Mandatory=$False, ValueFromPipeline=$true)] $Path, [String] $O
 
 ############# ENTER YOUR CREDENTIALS HERE #############
 
-$networkrange="192.168.0.1/24"      #Your subnet here. ex: "10.10.10.1/16, 192.168.0.1/24"
+$networkrange="192.168.0.1/24"      #Your subnet(s) here. ex: "10.10.10.1/16, 192.168.0.1/24"
 
 
 #Minutes to refresh:
@@ -11,10 +11,11 @@ $mins=1        #Time in minutes
 
 #Email settings
 $smtpserver=""      #SMTP Server address. ex:  email-smtp.us-west-2.amazonaws.com 
+$username = ""      #SMTP Username
+$password = ""      #SMTP Password
 $emailFrom = ""     #Email used for sending Mails 
 $emailTo = ""       #Recipient email Address 
-$username = ""
-$password = ""
+
 
 #############
 
@@ -371,8 +372,8 @@ if ( $element.MAC.Length -lt 17 )
 			
 			$emailMessage.Body = "<p><b>MAC: </b>$macaddress</p>
 			<p><b>Hostname</b>: $hostname</p>
-            <p><b>IP Address</b>: $ip</p>
-            <p><b>OS</b>: $os</p>
+			<p><b>IP Address</b>: $ip</p>
+			<p><b>OS</b>: $os</p>
 			<p><b>OUI</b>: $oui</p>
 			<p><b>Last seen</b>: $date</p>"
 
