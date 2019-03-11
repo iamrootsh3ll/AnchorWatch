@@ -11,7 +11,7 @@ An example of email notification from AnchorWatch:
 
 ## Dependency
 
-It has no other dependency other than nmap. Download nmap for windows here: https://nmap.org/download.html
+AnchorWatch has no dependency other than nmap. Download nmap for windows here: https://nmap.org/download.html
 
 ## Configuration
 
