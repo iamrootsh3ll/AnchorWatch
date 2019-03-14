@@ -28,13 +28,15 @@ AnchorWatch has no dependency other than nmap. Download nmap for windows here: h
 
 ## Configuration
 
-Edit ./anchorWatch.ps1 and add the follwing details in corresponding sections:
+Edit .\anchorWatch.ps1 and add the follwing details in corresponding sections:
 
 ```
 SMTP Hostname           Domain Name of SMTP Server
+SMTP Port               Default= 25. Use 25, 465, or 587
+
 SMTP Username
 SMTP Password
-Email Address From      Sender@email.com
+Email Address From      sender@email.com
 Email Address to        recipient@mailaddress.org
 ```
 
@@ -43,7 +45,7 @@ Additionally, you'd need to add network range in `trustDevices.ps1` also.
 # Scanning
 
 ```
-./anchorWatch.ps1
+.\anchorWatch.ps1
 ```
 
 Running `anchorWatch.ps1` will start AnchorWatch in default blacklisting mode.
@@ -59,10 +61,10 @@ Default mode blacklists all the devices by default. You'd need to whitelist all 
 
 To speedup the whitelisting process, you can alternatively run the following command:
 ```
-./trustDevices.ps1
+.\trustDevices.ps1
 ```
 
-`./trustDevices.ps1` scans the whole subnet(s) and creates a list of discovered devices under known_hosts.txt in a tabular form.
+`.\trustDevices.ps1` scans the whole subnet(s) and creates a list of discovered devices under known_hosts.txt in a tabular form.
 Net admins can then verify each device manually and manage their whitelist using known_hosts.txt
 
 # Fix Powershell ExecutionPolicy Error
