@@ -1,6 +1,11 @@
 ﻿[CmdletBinding(SupportsShouldProcess=$True)]
 Param ([Parameter(Mandatory=$False, ValueFromPipeline=$true)] $Path, [String] $OutputDelimiter = "`n", [Switch] $RunStatsOnly)
 
+#Fixed "Get-MACVendor Module not digitally signed" issue. Read more: http://tritoneco.com/2014/02/21/fix-for-powershell-script-not-digitally-signed/ 
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+#Powershell module to convert MAC Addresses to Vendor Name.
 Import-Module .\Get-MACVendor.psm1
 
 Write-Host "AnchorWatch 1.0.1 Started"
@@ -11,7 +16,7 @@ Write-Host "AnchorWatch 1.0.1 Started"
 $networkrange= ""      # Ask the administrator of the network for the subnet. Ex: "172.16.211.133/24, 10.10.10.1/16" 
 
 #Minutes to refresh:
-$mins=10        #Time in minutes. Default: 10 minutes
+$mins=10        #Default scanning interval: 10 minutes
 
 #Email settings
 $smtpserver=""      #SMTP Server address. ex:  email-smtp.us-west-2.amazonaws.com 
@@ -23,7 +28,7 @@ $emailTo = ""       #Recipient email Address
 #######################################################
 
 <#
-usage: 
+Usage: 
 $ ./trustDevices.ps1 - Generate a list of connected devices in known_hosts.txt 
 Use known_hosts.txt for whitelisted devices. 
 MAC addresses not available in known_hosts.txt will trigger an email alert.
@@ -361,8 +366,6 @@ if ( $element.MAC.Length -lt 17 )
 			$smtp.Credentials = New-Object System.Net.NetworkCredential($username, $password); 
 			$smtp.Send($emailMessage) 
 		}
-	
-
 	
 	#clear all variables in order to read the next object
 
