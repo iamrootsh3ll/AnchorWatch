@@ -16,10 +16,12 @@ Write-Host "AnchorWatch 1.0.1 Started"
 $networkrange= ""      # Ask the administrator of the network for the subnet. Ex: "172.16.211.133/24, 10.10.10.1/16" 
 
 #Minutes to refresh:
-$mins=10        #Default scanning interval: 10 minutes
+$mins=10               #Default scanning interval: 10 minutes
 
 #Email settings
-$smtpserver=""      #SMTP Server address. ex:  email-smtp.us-west-2.amazonaws.com 
+$smtpserver=""      #SMTP Server address. ex:  email-smtp.us-west-2.amazonaws.com
+$smtpport = 25      #Use SMTP port: 25, 465, or 587. Default= 25
+
 $username = ""      #SMTP Username
 $password = ""      #SMTP Password
 $emailFrom = ""     #Email used for sending Mails 
@@ -361,7 +363,7 @@ if ( $element.MAC.Length -lt 17 )
 			<p><b>OUI (Vender name)</b>: $oui</p>
 			<p><b>Last seen on the network</b>: $date</p>"
 
-			$smtp=new-object Net.Mail.SmtpClient($smtpServer) 
+			$smtp=new-object Net.Mail.SmtpClient($smtpserver, $smtpport) 
 			$smtp.EnableSsl = $true 
 			$smtp.Credentials = New-Object System.Net.NetworkCredential($username, $password); 
 			$smtp.Send($emailMessage) 
